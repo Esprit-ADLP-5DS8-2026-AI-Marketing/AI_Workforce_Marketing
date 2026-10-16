@@ -1,0 +1,9 @@
+# Dependencies for the RAG module.
+# This does not replace the team's main environment requirements.
+pymupdf
+numpy
+torch
+transformers
+sentence-transformers
+qdrant-client==1.19.1
+python-dotenv

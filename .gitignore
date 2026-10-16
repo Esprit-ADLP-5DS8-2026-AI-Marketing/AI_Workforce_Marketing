@@ -1,0 +1,22 @@
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python et environnements locaux
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ai_env/
+.DS_Store
+
+# Données générées et stockage local
+/data/processed/
+/data/chunks/
+/data/index/
+/data/qdrant_local/
+/data/answers/
+/data/maintenance/
+/data/evaluation/results/
