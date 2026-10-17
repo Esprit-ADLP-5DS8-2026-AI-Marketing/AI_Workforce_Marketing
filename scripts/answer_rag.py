@@ -65,7 +65,14 @@ def validate_answer(result, sources):
         if len(quote) > 800 or normalized(quote) not in normalized(lookup[sid]['text']):
             raise ValueError(f'Extrait absent du passage {sid} ou trop long.')
         cited.add(sid)
-    inline_ids = set(re.findall(r'\[(S\d+)\]', result['answer']))
+    citation_groups = re.findall(
+        r'\[(S\d+(?:\s*,\s*S\d+)*)\]', result['answer']
+    )
+    inline_ids = {
+        sid
+        for group in citation_groups
+        for sid in re.findall(r'S\d+', group)
+    }
     if inline_ids != cited:
         raise ValueError('Les citations dans la réponse et la liste ne correspondent pas.')
     if result['status'] in ('answered', 'partial') and not cited:
