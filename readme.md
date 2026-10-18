@@ -35,8 +35,8 @@ Limitation: a server restart interrupts running jobs (they are reported as faile
 
 ## Prerequisites
 
-Windows, PowerShell, Python 3.10+, the existing `.venv`, a Gemini API key, a Hugging Face token,
-and Docker Desktop for n8n.
+Windows, PowerShell, Python 3.10+, a Gemini API key, a Hugging Face token, and Docker Desktop
+(or another Docker Engine with Compose).
 
 ## Setup (PowerShell, from the project root)
 
@@ -60,18 +60,37 @@ python -c "from dotenv import load_dotenv; load_dotenv(); import os; from google
 ## Run
 
 ```powershell
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
 ```
 
 `0.0.0.0` lets Docker containers reach the service. Allow Python through Windows Firewall
-(private networks) when prompted. The API key protects the service, but do not expose port 8000
+(private networks) when prompted. The API key protects the service, but do not expose port 8010
 to untrusted networks.
 
 ```powershell
-Invoke-RestMethod http://localhost:8000/health
+Invoke-RestMethod http://localhost:8010/health
 ```
 
-Interactive docs: http://localhost:8000/docs
+Interactive docs: http://localhost:8010/docs
+
+## Run with Docker Compose
+
+Copy `.env.example` to `.env`, fill in `GEMINI_API_KEY`, `HF_TOKEN`, and a strong
+`SERVICE_API_KEY`, then build and start the service:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+```
+
+The API is available at http://localhost:8010. Check the service with `docker compose ps` and
+`Invoke-RestMethod http://localhost:8010/health`. Follow logs with
+`docker compose logs -f visual-agent`; stop it with `docker compose down`.
+
+Generated jobs are kept in the `visual-agent-outputs` Docker volume across container restarts.
+The service uses one Uvicorn worker because job state and the work queue are in-process. To change
+the host port, set `PORT` in `.env` (for example, `PORT=8011`). Do not expose the service publicly
+without HTTPS and appropriate network access controls.
 
 ## Tests (no real Gemini/FLUX calls)
 
@@ -120,7 +139,7 @@ All endpoints except `/health` require the header `X-API-Key: <SERVICE_API_KEY>`
 
 Response `202`:
 ```json
-{ "status": "queued", "message": "Job accepted. ...", "job_id": "3f2a...", "status_url": "http://host.docker.internal:8000/jobs/3f2a..." }
+{ "status": "queued", "message": "Job accepted. ...", "job_id": "3f2a...", "status_url": "http://host.docker.internal:8010/jobs/3f2a..." }
 ```
 
 Errors: `401` bad key, `413` image too large, `415` unsupported image type, `400` unreadable image,
@@ -142,7 +161,7 @@ While running, `progress` shows `completed/total`. When finished:
   "generated_images": [
     { "concept": "Morning Run", "concept_number": 1, "variation": 1,
       "filename": "01_morning_run_v01.png",
-      "url": "http://host.docker.internal:8000/jobs/3f2a.../images/01_morning_run_v01.png",
+      "url": "http://host.docker.internal:8010/jobs/3f2a.../images/01_morning_run_v01.png",
       "duration_seconds": 41.2 }
   ],
   "creative_prompts": { "visual_analysis": {}, "brand_analysis": {}, "visual_constraints": [], "creative_concepts": [], "gemini_model_used": "..." },
@@ -161,9 +180,9 @@ Returns the PNG. Requires the API key.
 
 | n8n location | Base URL |
 |---|---|
-| Local n8n in Docker Desktop (Windows) | `http://host.docker.internal:8000` |
+| Local n8n in Docker Desktop (Windows) | `http://host.docker.internal:8010` |
 | Docker on Linux | add `--add-host=host.docker.internal:host-gateway` to the n8n container |
-| n8n on the same machine without Docker | `http://localhost:8000` |
+| n8n on the same machine without Docker | `http://localhost:8010` |
 | Remote / hosted n8n | `localhost` is **not** reachable. Publish the service over HTTPS (reverse proxy or tunnel), set `PUBLIC_BASE_URL` to that URL, and keep the API key secret. |
 
 Image URLs are built from the host of the incoming request (or `PUBLIC_BASE_URL` if set), so
@@ -175,7 +194,7 @@ Credentials -> New -> **Header Auth**. Name: `X-API-Key`. Value: your `SERVICE_A
 
 ### Node 1 - HTTP Request "Submit job"
 
-- Method: `POST`; URL: `http://host.docker.internal:8000/generate-creatives`
+- Method: `POST`; URL: `http://host.docker.internal:8010/generate-creatives`
 - Authentication: Generic Credential Type -> Header Auth -> your credential
 - Send Body: on; Body Content Type: **Form-Data**
 - Body parameter 1: Type **n8n Binary File**, Name `image`, Input Data Field Name = the binary property holding the Telegram photo (usually `data`)
@@ -188,7 +207,7 @@ Credentials -> New -> **Header Auth**. Name: `X-API-Key`. Value: your `SERVICE_A
 
 ### Node 3 - HTTP Request "Get job"
 
-- Method: `GET`; URL: `http://host.docker.internal:8000/jobs/{{ $('Submit job').item.json.job_id }}`
+- Method: `GET`; URL: `http://host.docker.internal:8010/jobs/{{ $('Submit job').item.json.job_id }}`
 - Same Header Auth credential
 
 ### Node 4 - IF

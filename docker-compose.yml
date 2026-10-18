@@ -1,0 +1,15 @@
+services:
+  visual-agent:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      OUTPUT_DIR: /app/outputs
+    ports:
+      - "${PORT:-8010}:8010"
+    volumes:
+      - visual-agent-outputs:/app/outputs
+
+volumes:
+  visual-agent-outputs:

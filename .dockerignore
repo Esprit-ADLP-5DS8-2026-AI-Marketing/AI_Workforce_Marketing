@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.env
+outputs
+manual_test_output
+legacy
+products
+tests
+test_image.py
+*.ipynb
