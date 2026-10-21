@@ -1,0 +1,125 @@
+{
+  "dataset_id": "adlp_rag_eval_v2",
+  "schema_version": 1,
+  "created_on": "2026-10-18",
+  "corpus": {
+    "file": "data/processed/corpus_units.jsonl",
+    "sha256": "d83ad0e59f44cddd0d511105dbd41b567a859f926abe88518de245e20f803bd3",
+    "units": 65,
+    "sources": {
+      "lumera": {
+        "source": "Lumera_Aqua_Lumina_Brand_Product_Book.pdf",
+        "source_sha256": "695273383519a33119b50ca52777b2ad7157c619298e5887edfbccecec1a65ea",
+        "scope": "demo_fr_tn",
+        "synthetic": true
+      },
+      "meta": {
+        "source": "Standards publicitaires meta.pdf",
+        "source_sha256": "4a00dfdc60df1be4da7e561c0543533af75247ed951ef921a44e304b763fdf57",
+        "scope": "meta_ads",
+        "synthetic": false
+      },
+      "arpp": {
+        "source": "Recommandation-Produits-cosmetiques-v8.pdf",
+        "source_sha256": "1cac349929da34c172073bd31385313609b59f5c12ccc96d690e7acbc0051e8d",
+        "scope": "FR",
+        "synthetic": false
+      },
+      "methods": {
+        "source": "rag_database_content.pdf",
+        "source_sha256": "55b1a53c134749c92eefbbd1fa99008f3f360cfc6660616caad8db729f9391e9",
+        "scope": "project",
+        "synthetic": false
+      }
+    }
+  },
+  "splits": {
+    "dev": {
+      "file": "questions_dev.jsonl",
+      "sha256": "a0c5aa553f54d6bcab7ca0c99c362e3c2b387cf52bc0cee505f621f49a0840bb",
+      "count": 20,
+      "kinds": {
+        "answerable": 15,
+        "conflict": 2,
+        "unanswerable": 3
+      },
+      "question_ids": [
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05",
+        "Q06",
+        "Q07",
+        "Q08",
+        "Q09",
+        "Q10",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Q14",
+        "Q15",
+        "Q16",
+        "Q17",
+        "Q18",
+        "Q19",
+        "Q20"
+      ]
+    },
+    "test": {
+      "file": "questions_test.jsonl",
+      "sha256": "181b51504b2be01a7940dcb41106e6c1f422d736a83fb047eac29fbf0ba0b0ff",
+      "count": 10,
+      "kinds": {
+        "answerable": 6,
+        "multi_source": 2,
+        "unanswerable": 2
+      },
+      "question_ids": [
+        "Q21",
+        "Q22",
+        "Q23",
+        "Q24",
+        "Q25",
+        "Q26",
+        "Q27",
+        "Q28",
+        "Q29",
+        "Q30"
+      ]
+    }
+  },
+  "legacy_seen_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "Q10",
+    "Q11",
+    "Q12",
+    "Q13",
+    "Q14"
+  ],
+  "gold_changes": {
+    "Q01": "Accepter aussi la page 4, qui contient explicitement niacinamide à 4 %.",
+    "Q09": "Retenir V-010 et V-021 comme alternatives complètes ; V-003 seule ne couvre pas le logo.",
+    "Q11": "Accepter aussi la page 4, qui indique explicitement le parfum.",
+    "Q13": "La page 4 contient aussi le résultat à quatre semaines ; elle peut soutenir les deux groupes."
+  },
+  "protocol": [
+    "14 anciennes questions vues restent en dev ; 6 questions dev et 10 questions test sont nouvelles.",
+    "Familles de questions distinctes entre dev et test ; documents et parfois pages partagés.",
+    "Jeu pédagogique petit et conçu à la main, pas un benchmark indépendant externe.",
+    "Ne pas encoder/indexer les questions, les annotations ou les réponses attendues dans la base documentaire.",
+    "Ne pas régler le RAG à partir du test ; figer les choix sur dev avant de lancer le test.",
+    "Les politiques sont évaluées dans leur copie PDF, pas dans leur version web actuelle.",
+    "Les preuves ont été relues et vérifiées contre les unités ; relecture par l’équipe recommandée.",
+    "Les ancres sont un proxy lexical, pas une mesure d’implication logique ou de vérité.",
+    "Les questions sans réponse ne reçoivent pas de score positif de retrieval ; abstention à vérifier avec la génération."
+  ]
+}

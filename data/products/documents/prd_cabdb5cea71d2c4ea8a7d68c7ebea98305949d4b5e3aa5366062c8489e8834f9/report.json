@@ -1,0 +1,18 @@
+{
+  "status": "ready",
+  "user_id": "demo_mohamed",
+  "product_id": "aqua_lumina",
+  "document_id": "prd_cabdb5cea71d2c4ea8a7d68c7ebea98305949d4b5e3aa5366062c8489e8834f9",
+  "doc_id": "prd_cabdb5cea71d2c4ea8a7d68c7ebea98305949d4b5e3aa5366062c8489e8834f9",
+  "title": "Aqua Lumina - demonstration",
+  "source": "Lumera_Aqua_Lumina_Brand_Product_Book.pdf",
+  "source_sha256": "695273383519a33119b50ca52777b2ad7157c619298e5887edfbccecec1a65ea",
+  "synthetic": true,
+  "pages": 9,
+  "chunks": 42,
+  "pipeline_version": "product_pdf_sections_v1",
+  "model": "intfloat/multilingual-e5-small",
+  "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "dimension": 384,
+  "created_at": "2026-10-18T13:00:58.841096+00:00"
+}

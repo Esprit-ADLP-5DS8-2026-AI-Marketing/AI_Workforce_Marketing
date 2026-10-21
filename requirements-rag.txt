@@ -1,9 +1,32 @@
-# Dependencies for the RAG module.
-# This does not replace the team's main environment requirements.
-pymupdf
-numpy
-torch
-transformers
-sentence-transformers
+#RAG module — Python 3.10+
+# Install locally: python -m pip install -r requirements-rag.txt
+# Docker uses requirements-docker.txt and installs the CPU build of torch separately.
+
+# PDF extraction and numerical arrays
+PyMuPDF==1.26.6
+numpy==1.26.4
+
+# E5 embeddings and multilingual reranking (inference only)
+torch==2.10.0
+transformers==5.3.0
+sentence-transformers>=5.2,<6
+safetensors==0.7.0
+sentencepiece>=0.2,<0.3
+
+# Dependencies of sentence-transformers; listed to constrain scientific libraries.
+scipy==1.15.3
+scikit-learn>=1.6,<1.8
+
+# Local vector storage and process locking
 qdrant-client==1.19.1
-python-dotenv
+portalocker==3.2.0
+
+# Private runtime configuration
+python-dotenv==1.2.1
+
+# Internal API, product PDF uploads and HTTP client/tests
+fastapi==0.144.0
+pydantic==2.14.0
+uvicorn==0.46.0
+python-multipart==0.0.32
+httpx==0.28.1

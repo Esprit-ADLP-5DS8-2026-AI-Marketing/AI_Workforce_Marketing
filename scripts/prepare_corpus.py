@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Étape 1 : extraire les quatre PDF et sélectionner le corpus du MVP.
-
-Les sorties sont des unités documentaires.
 """
 import argparse
 import hashlib

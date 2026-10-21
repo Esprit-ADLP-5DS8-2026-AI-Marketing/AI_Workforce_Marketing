@@ -1,0 +1,7 @@
+{
+  "question": "Que disent les standards Meta sur les attributs personnels dans les publicités ?",
+  "scope": "common",
+  "doc_id": "meta",
+  "top_k": 8,
+  "candidate_k": 20
+}

@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Contournement local du défaut Mach-O __thread_bss de PROPACK sur macOS.
 
-python scripts/repair_scipy.py             # inspecter et vérifier
-python scripts/repair_scipy.py --apply     # sauvegarder, corriger, signer, vérifier
-python scripts/repair_scipy.py --restore   # restaurer nos propres changements
-
-Cette correction n'est pas une mise à jour officielle de SciPy.
-"""
 import argparse
 import hashlib
 import importlib.metadata

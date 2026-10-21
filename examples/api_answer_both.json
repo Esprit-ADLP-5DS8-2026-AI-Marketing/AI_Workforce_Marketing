@@ -1,0 +1,7 @@
+{
+  "question": "Peut-on annoncer qu’Aqua Lumina hydrate en profondeur ? Compare la documentation du produit et les recommandations ARPP.",
+  "scope": "both",
+  "product_id": "aqua_lumina",
+  "top_k": 8,
+  "candidate_k": 20
+}

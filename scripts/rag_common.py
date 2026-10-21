@@ -65,7 +65,7 @@ def encode(model, texts, batch_size=16, progress=False):
 
 
 def open_index():
-    from qdrant_client import QdrantClient
+    from local_qdrant import LocalQdrantClient as QdrantClient
     if not INDEX_MANIFEST.exists():
         raise SystemExit("Index absent : lancer build_indexes.py.")
     manifest = json.loads(INDEX_MANIFEST.read_text())

@@ -1,0 +1,12 @@
+**
+!Dockerfile
+!requirements-docker.txt
+!scripts/
+!scripts/*.py
+!prompts/
+!prompts/*.txt
+!docker/
+!docker/*.py
+!data/
+!data/raw/
+!data/raw/*.pdf

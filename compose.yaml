@@ -1,0 +1,14 @@
+name: adlp-advanced-rag
+services:
+  rag-api:
+    image: mohamedmarzouk17/adlp-advanced-rag:1.0-amd64
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    volumes:
+      - rag-products:/app/data/products
+      - rag-answers:/app/data/answers
+volumes:
+  rag-products:
+  rag-answers:

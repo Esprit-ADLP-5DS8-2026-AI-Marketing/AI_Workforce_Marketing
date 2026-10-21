@@ -17,7 +17,8 @@ import urllib.request
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-PROMPT_VERSION = 'rag_answer_v1_1'
+PROMPT_VERSION = 'rag_answer_v1_3'
+PROMPT_VERSIONS = ('rag_answer_v1_1', 'rag_answer_v1_2', 'rag_answer_v1_3')
 PROMPT = ROOT / f'prompts/{PROMPT_VERSION}.txt'
 DEFAULT_MODEL = 'gemini-3.7-flash'
 SCHEMA = {
@@ -65,14 +66,8 @@ def validate_answer(result, sources):
         if len(quote) > 800 or normalized(quote) not in normalized(lookup[sid]['text']):
             raise ValueError(f'Extrait absent du passage {sid} ou trop long.')
         cited.add(sid)
-    citation_groups = re.findall(
-        r'\[(S\d+(?:\s*,\s*S\d+)*)\]', result['answer']
-    )
-    inline_ids = {
-        sid
-        for group in citation_groups
-        for sid in re.findall(r'S\d+', group)
-    }
+    citation_groups = re.findall(r'\[(S\d+(?:\s*,\s*S\d+)*)\]', result['answer'])
+    inline_ids = {sid for group in citation_groups for sid in re.findall(r'S\d+', group)}
     if inline_ids != cited:
         raise ValueError('Les citations dans la réponse et la liste ne correspondent pas.')
     if result['status'] in ('answered', 'partial') and not cited:
@@ -80,13 +75,20 @@ def validate_answer(result, sources):
     return result
 
 
-def get_sources(question, strategy, top_k, offline):
-    from rag_common import load_encoder, encode, open_index, retrieve
-    encoder = load_encoder('cpu', offline)
+def get_sources(question, strategy, top_k, offline, *, use_reranker=False,
+                candidate_k=20, doc_id=None, device='cpu', diagnostics=None):
+    from rag_common import load_encoder, encode, open_index
+    from rerank_rag import load_reranker, search_passages, validate_search_options
+    validate_search_options(top_k, candidate_k, use_reranker)
+    encoder = load_encoder(device, offline)
     vector = encode(encoder, ['query: ' + question])[0]
+    reranker = load_reranker(device, offline) if use_reranker else None
     client, _ = open_index()
     try:
-        hits, latency = retrieve(client, strategy, vector, top_k)
+        hits, _, details = search_passages(
+            client, strategy, vector, question, top_k, doc_id,
+            reranker=reranker, candidate_k=candidate_k,
+        )
     finally:
         client.close()  # Libérer la base locale avant l'appel réseau.
     sources = []
@@ -99,12 +101,16 @@ def get_sources(question, strategy, top_k, offline):
             'synthetic': p.get('synthetic', False), 'text': p['text'],
             'retrieval_score': hit['score'],
         })
-    return sources, latency
+        if 'rerank_score' in hit:
+            sources[-1].update(rerank_score=hit['rerank_score'], retrieval_rank=hit['retrieval_rank'])
+    if diagnostics is not None:
+        diagnostics.update(details)
+    return sources, details['retrieval_ms']
 
 
 def build_request(question, sources, prompt):
     # La similarité n'est pas envoyée comme un score de confiance au LLM.
-    contexts = [{k: v for k, v in s.items() if k != 'retrieval_score'} for s in sources]
+    contexts = [{k: v for k, v in s.items() if k not in {'retrieval_score', 'rerank_score', 'retrieval_rank'}} for s in sources]
     return {
         'systemInstruction': {'parts': [{'text': prompt}]},
         'contents': [{'role': 'user', 'parts': [{'text': json.dumps(
@@ -226,12 +232,20 @@ def main():
     parser.add_argument('--strategy', choices=['fixed', 'sections'], default='sections')
     parser.add_argument('--top-k', type=int, default=4)
     parser.add_argument('--model', default=os.getenv('GEMINI_MODEL', DEFAULT_MODEL))
-    parser.add_argument('--offline', action='store_true', help='Cache E5 uniquement ; Gemini nécessite Internet')
+    parser.add_argument('--prompt-version', choices=PROMPT_VERSIONS, default=PROMPT_VERSION,
+                        help='Version du prompt : v1.3 par défaut, versions précédentes pour comparaison')
+    parser.add_argument('--offline', action='store_true', help='Cache E5 et reranker uniquement ; Gemini nécessite Internet')
+    parser.add_argument('--rerank', action='store_true', help='Activer le reclassement multilingue des passages')
+    parser.add_argument('--candidate-k', type=int, default=20)
+    parser.add_argument('--doc-id', choices=['lumera', 'meta', 'arpp', 'methods'])
+    parser.add_argument('--device', choices=['cpu', 'mps', 'cuda'], default='cpu')
     parser.add_argument('--dry-run', action='store_true', help='Préparer les passages sans appeler Gemini')
     parser.add_argument('--api-test', action='store_true', help='Appel texte minimal, sans E5, Qdrant ni schéma JSON')
     args = parser.parse_args()
     if not args.question.strip() or not 1 <= args.top_k <= 8:
         raise SystemExit('Question vide ou top-k hors de 1 à 8.')
+    from rerank_rag import validate_search_options
+    validate_search_options(args.top_k, args.candidate_k, args.rerank)
     if args.api_test:
         if args.dry_run:
             raise SystemExit('Choisir --api-test ou --dry-run, pas les deux.')
@@ -248,16 +262,22 @@ def main():
         print('Modèle demandé :', args.model)
         print('Réponse du test API :', text)
         return
-    if not PROMPT.exists():
-        raise SystemExit(f'Prompt absent : {PROMPT}')
-    prompt = PROMPT.read_text(encoding='utf-8')
-    sources, latency = get_sources(args.question, args.strategy, args.top_k, args.offline)
+    prompt_path = ROOT / 'prompts' / f'{args.prompt_version}.txt'
+    if not prompt_path.exists():
+        raise SystemExit(f'Prompt absent : {prompt_path}')
+    prompt = prompt_path.read_text(encoding='utf-8')
+    details = {}
+    sources, latency = get_sources(
+        args.question, args.strategy, args.top_k, args.offline,
+        use_reranker=args.rerank, candidate_k=args.candidate_k, doc_id=args.doc_id,
+        device=args.device, diagnostics=details,
+    )
     if not sources:
         raise SystemExit('Aucun passage retrouvé : arrêt sans appel Gemini.')
     record = {'question': args.question, 'strategy': args.strategy, 'top_k': args.top_k,
-              'model_requested': args.model, 'prompt_version': PROMPT_VERSION,
+              'model_requested': args.model, 'prompt_version': args.prompt_version,
               'prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(),
-              'sources': sources, 'retrieval_ms': latency, 'live_api_called': False}
+              'sources': sources, 'retrieval_ms': latency, 'retrieval': details, 'live_api_called': False}
     if args.dry_run:
         print('Passages préparés. Aucun appel Gemini. Fichier :', save_run(record))
         for s in sources:

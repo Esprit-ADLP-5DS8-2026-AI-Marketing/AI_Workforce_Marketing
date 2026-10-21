@@ -1,0 +1,7 @@
+{
+  "question": "Quelle est la concentration de niacinamide dans Aqua Lumina ?",
+  "scope": "product",
+  "product_id": "aqua_lumina",
+  "top_k": 8,
+  "candidate_k": 20
+}

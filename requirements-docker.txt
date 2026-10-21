@@ -1,0 +1,16 @@
+transformers==5.3.0
+sentence-transformers>=5.2,<6
+safetensors==0.7.0
+numpy==1.26.4
+scipy==1.15.3
+scikit-learn>=1.6,<1.8
+qdrant-client==1.19.1
+PyMuPDF==1.26.6
+python-dotenv==1.2.1
+fastapi==0.144.0
+pydantic==2.14.0
+uvicorn==0.46.0
+python-multipart==0.0.32
+httpx==0.28.1
+portalocker==3.2.0
+sentencepiece>=0.2,<0.3
